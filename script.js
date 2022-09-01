@@ -122,12 +122,30 @@ async function listMajors() {
 async function analyze(data) {
   const values = data.map((website) => {
     if (website.toString().toLowerCase() === "website".toLowerCase()) {
-      console.log("tata");
       return "Category";
     } else {
-      return "baka";
+      return "SomeSite";
     }
   });
 
-  return values;
+  updateSheets(values, data.length);
+}
+
+async function updateSheets(values, rangeValue) {
+  try {
+    gapi.client.sheets.spreadsheets.values
+      .update({
+        spreadsheetId: spreadsheetId,
+        range: `B1:${rangeValue}`,
+        majorDimension: "COLUMNS",
+        valueInputOption: "RAW",
+        values: [values],
+      })
+      .then((response) => {
+        const result = response.result;
+        console.log(`${result.updatedCells} cells updated.`);
+      });
+  } catch (err) {
+    console.log(err);
+  }
 }
