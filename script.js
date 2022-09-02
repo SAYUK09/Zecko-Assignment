@@ -121,14 +121,22 @@ async function listMajors() {
 
 async function analyze(data) {
   const values = data.map((website) => {
+    console.log(website, "ttt");
     if (website.toString().toLowerCase() === "website".toLowerCase()) {
       return "Category";
     } else {
-      return "SomeSite";
+      scrapWebsiteInfo(website[0]);
     }
   });
 
-  updateSheets(values, data.length);
+  // updateSheets(values, data.length);
+}
+
+async function scrapWebsiteInfo(website) {
+  console.log(website, "ssssss");
+  const res = await fetch(`https://u1qst2.sse.codesandbox.io/?url=${website}`);
+
+  const data = await res.json();
 }
 
 async function updateSheets(values, rangeValue) {
