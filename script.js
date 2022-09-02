@@ -151,13 +151,14 @@ async function scrapWebsiteInfo(website) {
 
 function getValuesToDisplay(data) {
   const values = data.map((item) => {
-    if (item === "Cateorgy") {
+    console.log(item, "tem");
+    if (item === "Category") {
       return item;
+    } else if (item === "error") {
+      return "NOT_WORKING";
     } else {
       if (item[0].app === "Shopify") {
         return "SHOPIFY";
-      } else if (item[0].app === "error") {
-        return "NOT_WORKING";
       } else if (item[0].app === "EasyEngine") {
         return "WOOCOMMERCE";
       } else if (item[0].app === "Nginx") {
@@ -170,6 +171,7 @@ function getValuesToDisplay(data) {
     }
   });
 
+  console.log(values, "val");
   updateSheets(values, data.length);
 }
 
