@@ -97,7 +97,7 @@ function handleSignoutClick() {
 
 async function listMajors() {
   let response;
-  console.log("tral");
+
   try {
     response = await gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId: spreadsheetId,
@@ -106,11 +106,10 @@ async function listMajors() {
 
     const data = JSON.parse(response.body);
 
-    analyze(data.values);
+    processSheetCells(data.values);
   } catch (err) {
     console.log("err", err);
     document.getElementById("content").innerText = err.message;
-    return;
   }
   const range = response.result;
   if (!range || !range.values || range.values.length == 0) {
@@ -119,24 +118,72 @@ async function listMajors() {
   }
 }
 
-async function analyze(data) {
-  const values = data.map((website) => {
-    console.log(website, "ttt");
-    if (website.toString().toLowerCase() === "website".toLowerCase()) {
+async function processSheetCells(data) {
+  const promises = data.map(async (cell) => {
+    if (cell.toString().toLowerCase() === "website".toLowerCase()) {
       return "Category";
     } else {
-      scrapWebsiteInfo(website[0]);
+      return scrapWebsiteInfo(cell[0]);
     }
   });
 
-  // updateSheets(values, data.length);
+  const result = await Promise.all(promises);
+
+  getValuesToDisplay(result);
 }
 
 async function scrapWebsiteInfo(website) {
-  console.log(website, "ssssss");
-  const res = await fetch(`https://u1qst2.sse.codesandbox.io/?url=${website}`);
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-  const data = await res.json();
+    const res = await fetch(
+      `https://u1qst2.sse.codesandbox.io/?url=${website}`,
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeoutId);
+    return res.json();
+  } catch (err) {
+    return "error";
+  }
+}
+
+function getValuesToDisplay(data) {
+  const values = data.map((item) => {
+    if (item === "Cateorgy") {
+      return item;
+    } else {
+      if (item[0].app === "Shopify") {
+        return "SHOPIFY";
+      } else if (item[0].app === "error") {
+        return "NOT_WORKING";
+      } else if (item[0].app === "EasyEngine") {
+        return "WOOCOMMERCE";
+      } else if (item[0].app === "Nginx") {
+        return "BIGCOMMERCE";
+      } else if (item[0].app === "Envoy") {
+        return "OTHERS";
+      } else if (item[0].app === "Magento 2") {
+        return "MAGENTO";
+      }
+    }
+  });
+
+  updateSheets(values, data.length);
+}
+
+async function analyze(data) {
+  const values = await data.map(async (website) => {
+    if (website.toString().toLowerCase() === "website".toLowerCase()) {
+      return "Category";
+    } else {
+      const data = await scrapWebsiteInfo(website[0]);
+      return data;
+    }
+  });
+
+  return values;
 }
 
 async function updateSheets(values, rangeValue) {
